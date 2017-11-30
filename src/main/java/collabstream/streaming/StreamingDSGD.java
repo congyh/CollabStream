@@ -10,6 +10,18 @@ import backtype.storm.StormSubmitter;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 
+/**
+ * 流式算法主程序
+ *
+ * <pre>需要参数:
+ * 1. local 本地环境
+ * 2. 用户数量
+ * 3. 项目数量 # 需要根据上面两个值进行数据的划分.
+ * 4. 输入文件名称 # 训练数据或者测试数据集的文件名
+ * 5. 用户矩阵文件名 # 训练结果--用户矩阵
+ * 6. 项目矩阵文件名 # 训练结果--项目矩阵
+ * </pre>
+ */
 public class StreamingDSGD {
 	public static void main(String[] args) throws Exception {
 		if (args.length < 6) {

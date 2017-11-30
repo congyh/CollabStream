@@ -8,6 +8,15 @@ import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DurationFormatUtils;
 
+/**
+ * 推荐结果评估程序
+ *
+ * <pre>
+ * 完成了以下几件事
+ * 1. 计算RMSE指标
+ * 2.
+ * </pre>
+ */
 public class TestPredictions {
 	public static void main(String[] args) throws Exception {
 		if (args.length < 7) {
@@ -175,7 +184,8 @@ public class TestPredictions {
 				System.err.printf("######## Could not parse line %d in %s\n%s\n", in.getLineNumber(), testFilename, e);
 			}
 		}
-		
+
+		// RMSE计算
 		double rmse = Math.sqrt(totalSqErr / numRatings);
 		
 		endTime = System.currentTimeMillis();
