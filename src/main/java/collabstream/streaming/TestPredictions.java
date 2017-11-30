@@ -12,9 +12,14 @@ import org.apache.commons.lang.time.DurationFormatUtils;
  * 推荐结果评估程序
  *
  * <pre>
- * 完成了以下几件事
- * 1. 计算RMSE指标
- * 2.
+ * 对于训练样本非常大的情况, 通常使用留出法进行训练及调优即可; 当样本较少的情况下才需要进行k折交叉验证.
+ *
+ * 有以下几点需要注意的:
+ * 1. 训练集和测试集是不相交的, 在训练集上对用户和物品模型进行训练, 然后在测试集上进行RMSE的计算才是正确的做法;
+ * 2. (实际上是冷启动问题)在测试集中是可能出现训练集中未知的用户或者物品的, 对于此种情况的处理, 本文采用了以下应对方案:
+ * 		- 如果至少用户和物品其中一个是已知的, 则用用户或物品历史评分评分作为预测评分;
+ * 		- 如果是完全未知的评分, 则使用训练集整体的历史评分均分作为预测评分;
+ * 	这样做能够最大限度减少RMSE值.
  * </pre>
  */
 public class TestPredictions {
@@ -28,7 +33,9 @@ public class TestPredictions {
 		
 		long testStartTime = System.currentTimeMillis();
 		System.out.printf("######## Testing started: %1$tY-%1$tb-%1$td %1$tT %tZ\n", testStartTime);
-		
+
+		// 计算RMSE的时候需要提前知道用户数，物品数，隐向量的长度
+
 		int numUsers = Integer.parseInt(args[0]);
 		int numItems = Integer.parseInt(args[1]);
 		int numLatent = Integer.parseInt(args[2]);
@@ -36,12 +43,14 @@ public class TestPredictions {
 		String testFilename = args[4];
 		String userFilename = args[5];
 		String itemFilename = args[6];
-
+		// 训练集的评分数值总和
 		float trainingTotal = 0.0f;
+		// 训练集的评分总个数
 		int trainingCount = 0;
-		
+		// userCount是Map<userId, 评分个数>
 		Map<Integer, Integer> userCount = new HashMap<Integer, Integer>();
 		Map<Integer, Integer> itemCount = new HashMap<Integer, Integer>();
+		// userTotal是Map<userId, 评分值总和>
 		Map<Integer, Float> userTotal = new HashMap<Integer, Float>();
 		Map<Integer, Float> itemTotal = new HashMap<Integer, Float>();
 		
@@ -53,7 +62,9 @@ public class TestPredictions {
 		while ((line = in.readLine()) != null) {
 			try {
 				String[] token = StringUtils.split(line, ' ');
+				// i是用户的编号
 				int i = Integer.parseInt(token[0]);
+				// j是物品的编号
 				int j = Integer.parseInt(token[1]);
 				float rating = Float.parseFloat(token[2]);
 				
@@ -80,14 +91,16 @@ public class TestPredictions {
 			}
 		}
 		in.close();
-		
+		// 训练集的平均评分
 		float trainingAvg = trainingTotal / trainingCount;
 		
 		long endTime = System.currentTimeMillis();
 		System.out.printf("######## Finished reading training file: %1$tY-%1$tb-%1$td %1$tT %tZ\n", endTime);
 		System.out.println("######## Time elapsed reading training file: "
 			+ DurationFormatUtils.formatPeriod(startTime, endTime, "H:m:s") + " (h:m:s)");
-		
+
+		// 初始化用户和物品矩阵
+
 		float[][] userMatrix = new float[numUsers][numLatent];
 		for (int i = 0; i < numUsers; ++i) {
 			for (int k = 0; k < numLatent; ++k) {
@@ -101,7 +114,9 @@ public class TestPredictions {
 				itemMatrix[i][k] = 0.0f;
 			}
 		}
-		
+
+		// 从文件中读入用户和物品矩阵
+
 		startTime = System.currentTimeMillis();
 		System.out.printf("######## Started reading user file: %1$tY-%1$tb-%1$td %1$tT %tZ\n", startTime);
 		
@@ -156,27 +171,32 @@ public class TestPredictions {
 		while ((line = in.readLine()) != null) {
 			try {
 				String[] token = StringUtils.split(line, ' ');
+				// i是测试集中评分对应的userId
 				int i = Integer.parseInt(token[0]);
+				// j是测试集中评分对饮的itemId
 				int j = Integer.parseInt(token[1]);
 				float rating = Float.parseFloat(token[2]);
 				float prediction;
 				
 				boolean userKnown = userCount.containsKey(i);
 				boolean itemKnown = itemCount.containsKey(j);
-				
+				// 如果是已知用户对已知物品的评分, 则使用训练集得到的用户和物品隐向量来进行拟合
 				if (userKnown && itemKnown) {
 					prediction = 0.0f;
 					for (int k = 0; k < numLatent; ++k) {
 						prediction += userMatrix[i][k] * itemMatrix[j][k];
 					}
+					// 如果是已知用户对未知物品或者未知用户对已知物品的评分,
+					// 则使用该已知用户的历史平均评分或者已知物品的历史平均评分作为预测评分
+
 				} else if (userKnown) {
 					prediction = userTotal.get(i) / userCount.get(i);
 				} else if (itemKnown) {
 					prediction = itemTotal.get(j) / itemCount.get(j);
-				} else {
+				} else { // 如果评分完全是未知的, 则使用训练集的整体平均分作为预测评分
 					prediction = trainingAvg;
 				}
-				
+				// 计算预测值和实际评分值(测试集评分)的差异
 				float diff = prediction - rating;
 				totalSqErr += diff*diff;
 				++numRatings;
