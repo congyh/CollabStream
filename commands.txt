@@ -15,7 +15,20 @@ mvn exec:java -Dexec.mainClass=collabstream.streaming.TestPredictions -Dexec.arg
 
 mvn exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local 6041 3953 data/input/MovieLens/ml_tr_rand.txt data/output/MovieLens/ml.user data/output/MovieLens/ml.item' -Dexec.classpathScope=compile
 
+# 模型训练: ml_100k TODO 这里比实际的用户和物品数加上1是怎么个意思.
 mvn exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local 6041 3953 data/input/MovieLens/ml_100k data/output/MovieLens/ml_100k.user data/output/MovieLens/ml_100k.item' -Dexec.classpathScope=compile
 
-# 下面的这个是movielens的数据记录, 执行的参数分别为
+# RMSE计算
+
+# TODO 下面这个好像不对, 少了一个参数(训练集或者测试集)
+# 下面的这个是movielens的数据记录, 执行的参数分别为用户数, 物品数, 隐特征向量维度,..., ..., 用户隐特征矩阵, 物品隐特征矩阵
+mvn compile exec:java -Dexec.mainClass=collabstream.streaming.TestPredictions -Dexec.args='6041 3953 10 data/input/MovieLens/ml1m_te_rb.dat data/output/MovieLens/ml_100k.user data/output/MovieLens/ml_100k.item' -Dexec.classpathScope=compile
+
+# 下面是我自己修改后的指令
+# ml-100k训练, 比较重要的参数是最大迭代次数和默认时延, 都是在StreamingSGD文件中设置
+mvn exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local 944 1683 data/input/MovieLens/u1.base data/output/MovieLens/ml_100k.user data/output/MovieLens/ml_100k.item' -Dexec.classpathScope=compile
+
+mvn exec:java -Dexec.mainClass=collabstream.streaming.StreamingDSGD -Dexec.args='local 6041 3953 data/input/MovieLens/ml_1m.dat data/output/MovieLens/ml_1m.user data/output/MovieLens/ml_1m.item' -Dexec.classpathScope=compile
+
+# ml-100k RMSE计算
 mvn compile exec:java -Dexec.mainClass=collabstream.streaming.TestPredictions -Dexec.args='6041 3953 10 data/input/MovieLens/ml1m_te_rb.dat data/output/MovieLens/ml_100k.user data/output/MovieLens/ml_100k.item' -Dexec.classpathScope=compile

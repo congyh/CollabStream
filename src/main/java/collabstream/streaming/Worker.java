@@ -13,6 +13,9 @@ import backtype.storm.tuple.Values;
 
 import static collabstream.streaming.MsgType.*;
 
+/**
+ * Worker进行的是实际的计算
+ */
 public class Worker implements IRichBolt {
 	public static final int TO_MASTER_STREAM_ID = 1;
 	public static final int USER_BLOCK_STREAM_ID = 2;

@@ -40,6 +40,7 @@ public class RatingsSource implements IRichSpout {
 		try {
 			input = new BufferedReader(new FileReader(config.inputFilename));
 		} catch (IOException e) {
+			System.out.println("找不到文件");
 			throw new RuntimeException(e);
 		}
 	}
@@ -77,7 +78,7 @@ public class RatingsSource implements IRichSpout {
 				collector.emit(new Values(END_OF_DATA, null), END_OF_DATA);
 			} else {
 				try {
-					String[] token = StringUtils.split(line, ' ');
+					String[] token = StringUtils.split(line, "::");
 					int userId = Integer.parseInt(token[0]);
 					int itemId = Integer.parseInt(token[1]);
 					float rating = Float.parseFloat(token[2]);

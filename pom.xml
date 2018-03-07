@@ -32,7 +32,8 @@
 			<groupId>storm</groupId>
 			<artifactId>storm</artifactId>
 			<version>0.5.4</version>
-			<scope>provided</scope>
+			<!--本地运行需要将这个注释掉-->
+			<!--<scope>provided</scope>-->
 		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>

@@ -17,7 +17,7 @@ import backtype.storm.tuple.Fields;
  * 1. local 本地环境
  * 2. 用户数量
  * 3. 项目数量 # 需要根据上面两个值进行数据的划分.
- * 4. 输入文件名称 # 训练数据或者测试数据集的文件名
+ * 4. 输入文件名称 # 训练集文件名
  * 5. 用户矩阵文件名 # 训练结果--用户矩阵
  * 6. 项目矩阵文件名 # 训练结果--项目矩阵
  * </pre>
@@ -38,6 +38,8 @@ public class StreamingDSGD {
 			props.load(in);
 			in.close();
 		}
+
+		/* 参数初始化 */
 		
 		int numUsers = Integer.parseInt(args[1]);
 		int numItems = Integer.parseInt(args[2]);
@@ -47,10 +49,12 @@ public class StreamingDSGD {
 		float userPenalty = Float.parseFloat(props.getProperty("userPenalty", "0.1"));
 		float itemPenalty = Float.parseFloat(props.getProperty("itemPenalty", "0.1"));
 		float initialStepSize = Float.parseFloat(props.getProperty("initialStepSize", "0.1"));
+		// (重要)最大迭代次数
 		int maxTrainingIters = Integer.parseInt(props.getProperty("maxTrainingIters", "30"));
 		String inputFilename = args[3];
 		String userOutputFilename = args[4];
 		String itemOutputFilename = args[5];
+		// 输入时延(默认0)
 		long inputDelay = Long.parseLong(props.getProperty("inputDelay", "0"));
 		boolean debug = Boolean.parseBoolean(props.getProperty("debug", "false"));
 
@@ -84,7 +88,7 @@ public class StreamingDSGD {
 		
 		System.out.println("######## StreamingDSGD.main: submitting topology");
 		
-		if ("local".equals(args[0])) {
+		if ("local".equals(args[0])) { // 使用本地虚拟集群进行实验
 			LocalCluster cluster = new LocalCluster();
 			cluster.submitTopology("StreamingDSGD", stormConfig, builder.createTopology());
 		} else {
